@@ -41,7 +41,6 @@ public class UserService implements UserDetailsService {
         List<GrantedAuthority> authorities = user.getRoles()
                 .stream()
                 .map(role -> new SimpleGrantedAuthority(role.getName()))
-                .peek(role -> log.info("Role: " + role->getAuthority())) // shows the name of the user's roles
                 .collect(Collectors.toList());
         log.info("logged user" + username);
         return new org.springframework.security.core.userdetails.User(user.getUsername(), user.getPassword(),

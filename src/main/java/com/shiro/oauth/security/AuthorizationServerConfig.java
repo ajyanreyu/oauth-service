@@ -26,11 +26,24 @@ public class AuthorizationServerConfig extends AuthorizationServerConfigurerAdap
     @Override
     public void configure(AuthorizationServerSecurityConfigurer security) throws Exception {
         super.configure(security);
+        security.tokenKeyAccess("permitAll()")
+        .checkTokenAccess("isAuthenticated()");
     }
 
+    /**
+     * Configure frontEnd client
+     * @param clients
+     * @throws Exception
+     */
     @Override
     public void configure(ClientDetailsServiceConfigurer clients) throws Exception {
         super.configure(clients);
+        clients.inMemory().withClient("shiroFrontEnd")
+                .secret(bCryptPasswordEncoder.encode("1234"))
+                .scopes("read", "write")
+                .authorizedGrantTypes("password", "refresh_token")
+                .accessTokenValiditySeconds(3600)
+                .refreshTokenValiditySeconds(3600);
     }
 
     @Override
@@ -43,7 +56,7 @@ public class AuthorizationServerConfig extends AuthorizationServerConfigurerAdap
     }
 
     @Bean
-    public JwtTokenStore tokenStore(){
+    public JwtTokenStore tokenStore() {
         return new JwtTokenStore(accessTokenConverter());
 
     }
