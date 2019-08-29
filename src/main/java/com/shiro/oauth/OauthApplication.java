@@ -1,4 +1,4 @@
-package com.shiro.oauth.oauth;
+package com.shiro.oauth;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
