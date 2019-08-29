@@ -1,1 +1,12 @@
+spring:
+  application:
+    name: oauth-service
 
+
+server:
+  port: 9100
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://127.0.0.1:8761/eureka
