@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.AuthenticationEventPublisher;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
@@ -18,6 +19,9 @@ public class SpringSecurityConfig extends WebSecurityConfigurerAdapter {
     @Qualifier("userServiceImpl")
     private UserDetailsService userService;
 
+    @Autowired
+    private AuthenticationEventPublisher authenticationEventPublisher;
+
     /**
      * Register the user services in the authentication manager
      *
@@ -27,7 +31,10 @@ public class SpringSecurityConfig extends WebSecurityConfigurerAdapter {
     @Override
     @Autowired
     protected void configure(AuthenticationManagerBuilder auth) throws Exception {
-        auth.userDetailsService(this.userService).passwordEncoder(passwordEncoder());
+        auth.userDetailsService(this.userService).passwordEncoder(passwordEncoder())
+        .and()
+        .authenticationEventPublisher(authenticationEventPublisher);
+
     }
 
     /**
