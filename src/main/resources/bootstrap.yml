@@ -1,0 +1,13 @@
+spring:
+  application:
+    name: oauth-service
+
+  #Configure the access point to the configuration server
+  cloud:
+    config:
+      uri: http://localhost:8888
+management:
+  endpoints:
+    web:
+      exposure:
+        include: http://*

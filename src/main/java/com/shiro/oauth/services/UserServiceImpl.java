@@ -19,6 +19,7 @@ import java.util.stream.Collectors;
 public class UserServiceImpl implements UserService, UserDetailsService {
 
     private Logger log = LoggerFactory.getLogger(UserFeignClient.class);
+
     @Autowired
     private UserFeignClient userFeignClient;
 
@@ -26,7 +27,7 @@ public class UserServiceImpl implements UserService, UserDetailsService {
      * Load user by username. Map the user of the commons library to the spring security user,
      * also map the roles to GrantedAuthority
      *
-     * @param username
+     * @param username user name
      * @return UserDetails
      * @throws UsernameNotFoundException
      */

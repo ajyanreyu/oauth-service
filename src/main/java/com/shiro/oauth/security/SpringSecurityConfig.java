@@ -1,6 +1,7 @@
 package com.shiro.oauth.security;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -12,7 +13,9 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 @Configuration
 public class SpringSecurityConfig extends WebSecurityConfigurerAdapter {
 
+
     @Autowired
+    @Qualifier("userServiceImpl")
     private UserDetailsService userService;
 
     /**
@@ -24,7 +27,6 @@ public class SpringSecurityConfig extends WebSecurityConfigurerAdapter {
     @Override
     @Autowired
     protected void configure(AuthenticationManagerBuilder auth) throws Exception {
-        super.configure(auth);
         auth.userDetailsService(this.userService).passwordEncoder(passwordEncoder());
     }
 
