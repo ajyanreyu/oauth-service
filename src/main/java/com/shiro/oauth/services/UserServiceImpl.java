@@ -52,4 +52,9 @@ public class UserServiceImpl implements UserService, UserDetailsService {
     public User findByUsername(String username) {
         return userFeignClient.findByUsername(username);
     }
+
+    @Override
+    public User updateLoginAttempts(Long id, User user) {
+        return userFeignClient.updateLoginAttempts(id, user);
+    }
 }
