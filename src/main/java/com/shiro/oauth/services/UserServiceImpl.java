@@ -2,6 +2,7 @@ package com.shiro.oauth.services;
 
 import com.shiro.oauth.client.UserFeignClient;
 import com.shiro.user.commons.entity.User;
+import feign.FeignException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,19 +34,21 @@ public class UserServiceImpl implements UserService, UserDetailsService {
      */
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        User user = userFeignClient.findByUsername(username);
 
-        if (user == null) {
+        try {
+            User user = userFeignClient.findByUsername(username);
+
+            List<GrantedAuthority> authorities = user.getRoles()
+                    .stream()
+                    .map(role -> new SimpleGrantedAuthority(role.getName()))
+                    .collect(Collectors.toList());
+            log.info("logged user" + username);
+            return new org.springframework.security.core.userdetails.User(user.getUsername(), user.getPassword(),
+                    user.getIsActive(), true, true, true, authorities);
+        } catch (FeignException e) {
             log.error("User '" + username + "' not found");
             throw new UsernameNotFoundException("User not found");
         }
-        List<GrantedAuthority> authorities = user.getRoles()
-                .stream()
-                .map(role -> new SimpleGrantedAuthority(role.getName()))
-                .collect(Collectors.toList());
-        log.info("logged user" + username);
-        return new org.springframework.security.core.userdetails.User(user.getUsername(), user.getPassword(),
-                user.getIsActive(), true, true, true, authorities);
     }
 
     @Override
