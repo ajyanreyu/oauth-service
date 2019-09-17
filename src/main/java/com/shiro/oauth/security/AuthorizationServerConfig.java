@@ -17,6 +17,7 @@ import org.springframework.security.oauth2.provider.token.store.JwtAccessTokenCo
 import org.springframework.security.oauth2.provider.token.store.JwtTokenStore;
 
 import java.util.Arrays;
+import java.util.Objects;
 
 @RefreshScope
 @Configuration
@@ -49,7 +50,7 @@ public class AuthorizationServerConfig extends AuthorizationServerConfigurerAdap
     @Override
     public void configure(ClientDetailsServiceConfigurer clients) throws Exception {
         clients.inMemory().withClient(env.getProperty("config.security.oauth.client.id"))
-                .secret(bCryptPasswordEncoder.encode(env.getProperty("config.security.oauth.client.password")))
+                .secret(bCryptPasswordEncoder.encode(Objects.requireNonNull(env.getProperty("config.security.oauth.client.password"))))
                 .scopes("read", "write")
                 .authorizedGrantTypes("password", "refresh_token")
                 .accessTokenValiditySeconds(3600)
@@ -77,7 +78,7 @@ public class AuthorizationServerConfig extends AuthorizationServerConfigurerAdap
     @Bean
     public JwtAccessTokenConverter accessTokenConverter() {
         JwtAccessTokenConverter tokenConverter = new JwtAccessTokenConverter();
-        tokenConverter.setSigningKey(env.getProperty("config.security.oauth.client.client.jwt.key")); // sign the token
+        tokenConverter.setSigningKey(Objects.requireNonNull(env.getProperty("config.security.oauth.client.client.jwt.key"))); // sign the token
         return tokenConverter;
     }
 }

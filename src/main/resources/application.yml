@@ -2,6 +2,10 @@ spring:
   application:
     name: oauth-service
 
+  sleuth:
+    sampler:
+      probability: 1.0
+
 
 server:
   port: 9100

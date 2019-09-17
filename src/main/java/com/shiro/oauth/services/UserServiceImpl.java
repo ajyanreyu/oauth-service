@@ -1,5 +1,6 @@
 package com.shiro.oauth.services;
 
+import brave.Tracer;
 import com.shiro.oauth.client.UserFeignClient;
 import com.shiro.user.commons.entity.User;
 import feign.FeignException;
@@ -24,6 +25,9 @@ public class UserServiceImpl implements UserService, UserDetailsService {
     @Autowired
     private UserFeignClient userFeignClient;
 
+    @Autowired
+    private Tracer tracer;
+
     /**
      * Load user by username. Map the user of the commons library to the spring security user,
      * also map the roles to GrantedAuthority
@@ -46,7 +50,9 @@ public class UserServiceImpl implements UserService, UserDetailsService {
             return new org.springframework.security.core.userdetails.User(user.getUsername(), user.getPassword(),
                     user.getIsActive(), true, true, true, authorities);
         } catch (FeignException e) {
-            log.error("User '" + username + "' not found");
+            String errorInfo = "User '" + username + "' not found";
+            log.error(errorInfo);
+            tracer.currentSpan().tag("Message.error", errorInfo + ": " + e.getMessage());
             throw new UsernameNotFoundException("User not found");
         }
     }

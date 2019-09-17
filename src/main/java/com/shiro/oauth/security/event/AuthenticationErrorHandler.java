@@ -1,5 +1,6 @@
 package com.shiro.oauth.security.event;
 
+import brave.Tracer;
 import com.shiro.oauth.services.UserService;
 import com.shiro.user.commons.entity.User;
 import feign.FeignException;
@@ -20,6 +21,9 @@ public class AuthenticationErrorHandler implements AuthenticationEventPublisher 
     @Autowired
     private UserService userService;
 
+    @Autowired
+    private Tracer tracer;
+
     @Override
     public void publishAuthenticationSuccess(Authentication authentication) {
         UserDetails user = (UserDetails) authentication.getPrincipal();
@@ -34,23 +38,31 @@ public class AuthenticationErrorHandler implements AuthenticationEventPublisher 
 
     @Override
     public void publishAuthenticationFailure(AuthenticationException e, Authentication authentication) {
-        log.error("Login error " + e.getMessage());
+        String errorInfo = "Login error " + e.getMessage();
+        log.error(errorInfo);
 
+        StringBuilder errors = new StringBuilder();
         try {
+            errors.append(e);
             User user = userService.findByUsername(authentication.getName());
             if (user.getLoginAttempts() == null) {
                 user.setLoginAttempts(0);
             }
             user.setLoginAttempts(user.getLoginAttempts() + 1);
             log.info("Login attempts: " + user.getLoginAttempts());
+            errors.append(" - Login attempts: " + user.getLoginAttempts());
             if (user.getLoginAttempts() >= 3) {
-                log.info(String.format("User %s disabled by maximum number of attempts", user.getUsername()));
+                String maxAttemptsError = String.format("User %s disabled by maximum number of attempts", user.getUsername());
+                log.info(" - " + maxAttemptsError);
+                errors.append(maxAttemptsError);
                 user.setIsActive(false);
             }
             userService.updateLoginAttempts(user.getId(), user);
+            tracer.currentSpan().tag("message.error", errors.toString());
         } catch (FeignException ex) {
             log.error(String.format("username %s is not found", authentication.getName()));
             log.error(ex.getMessage());
+            errors.append(String.format("username %s is not found", authentication.getName()));
         }
 
     }
