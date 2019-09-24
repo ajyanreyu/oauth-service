@@ -1,5 +1,7 @@
 package com.shiro.oauth.security;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.context.config.annotation.RefreshScope;
 import org.springframework.context.annotation.Bean;
@@ -17,12 +19,14 @@ import org.springframework.security.oauth2.provider.token.store.JwtAccessTokenCo
 import org.springframework.security.oauth2.provider.token.store.JwtTokenStore;
 
 import java.util.Arrays;
-import java.util.Objects;
 
 @RefreshScope
 @Configuration
 @EnableAuthorizationServer
 public class AuthorizationServerConfig extends AuthorizationServerConfigurerAdapter {
+
+    private Logger log = LoggerFactory.getLogger(AuthorizationServerConfig.class);
+
     @Autowired
     private Environment env;
 
@@ -35,50 +39,46 @@ public class AuthorizationServerConfig extends AuthorizationServerConfigurerAdap
     @Autowired
     AdditionalTokenInformation additionalTokenInformation;
 
+
     @Override
     public void configure(AuthorizationServerSecurityConfigurer security) throws Exception {
         security.tokenKeyAccess("permitAll()")
                 .checkTokenAccess("isAuthenticated()");
     }
 
-    /**
-     * Configure frontEnd client
-     *
-     * @param clients
-     * @throws Exception
-     */
     @Override
     public void configure(ClientDetailsServiceConfigurer clients) throws Exception {
+        log.info("--> Client Secret: " + env.getProperty("config.security.oauth.client.secret"));
         clients.inMemory().withClient(env.getProperty("config.security.oauth.client.id"))
-                .secret(bCryptPasswordEncoder.encode(Objects.requireNonNull(env.getProperty("config.security.oauth.client.password"))))
+                .secret(bCryptPasswordEncoder.encode(env.getProperty("config.security.oauth.client.secret")))
                 .scopes("read", "write")
                 .authorizedGrantTypes("password", "refresh_token")
                 .accessTokenValiditySeconds(3600)
-                .refreshTokenValiditySeconds(7200);
+                .refreshTokenValiditySeconds(3600);
     }
 
     @Override
     public void configure(AuthorizationServerEndpointsConfigurer endpoints) throws Exception {
+
         TokenEnhancerChain tokenEnhancerChain = new TokenEnhancerChain();
         tokenEnhancerChain.setTokenEnhancers(Arrays.asList(additionalTokenInformation, accessTokenConverter()));
 
-        endpoints.authenticationManager(authenticationManager) // register our authentication manager
+        endpoints.authenticationManager(authenticationManager)
                 .tokenStore(tokenStore())
                 .accessTokenConverter(accessTokenConverter())
                 .tokenEnhancer(tokenEnhancerChain);
-
     }
 
     @Bean
     public JwtTokenStore tokenStore() {
         return new JwtTokenStore(accessTokenConverter());
-
     }
 
     @Bean
     public JwtAccessTokenConverter accessTokenConverter() {
         JwtAccessTokenConverter tokenConverter = new JwtAccessTokenConverter();
-        tokenConverter.setSigningKey(Objects.requireNonNull(env.getProperty("config.security.oauth.client.client.jwt.key"))); // sign the token
+        tokenConverter.setSigningKey(env.getProperty("config.security.oauth.client.jwt.key"));
         return tokenConverter;
     }
+
 }

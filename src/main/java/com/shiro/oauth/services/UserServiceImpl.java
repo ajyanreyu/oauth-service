@@ -3,7 +3,6 @@ package com.shiro.oauth.services;
 import brave.Tracer;
 import com.shiro.oauth.client.UserFeignClient;
 import com.shiro.user.commons.entity.User;
-import feign.FeignException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,7 +22,7 @@ public class UserServiceImpl implements UserService, UserDetailsService {
     private Logger log = LoggerFactory.getLogger(UserFeignClient.class);
 
     @Autowired
-    private UserFeignClient userFeignClient;
+    private UserFeignClient client;
 
     @Autowired
     private Tracer tracer;
@@ -38,32 +37,33 @@ public class UserServiceImpl implements UserService, UserDetailsService {
      */
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-
-        try {
-            User user = userFeignClient.findByUsername(username);
-
-            List<GrantedAuthority> authorities = user.getRoles()
-                    .stream()
-                    .map(role -> new SimpleGrantedAuthority(role.getName()))
-                    .collect(Collectors.toList());
+        User user = client.findByUsername(username);
+        log.debug("User is null");
+        if (user == null) {
             log.info("logged user" + username);
-            return new org.springframework.security.core.userdetails.User(user.getUsername(), user.getPassword(),
-                    user.getIsActive(), true, true, true, authorities);
-        } catch (FeignException e) {
-            String errorInfo = "User '" + username + "' not found";
-            log.error(errorInfo);
-            tracer.currentSpan().tag("Message.error", errorInfo + ": " + e.getMessage());
-            throw new UsernameNotFoundException("User not found");
+            throw new UsernameNotFoundException("User '" + username + "'not found");
         }
+
+        List<GrantedAuthority> authorities = user.getRoles()
+                .stream()
+                .map(role -> new SimpleGrantedAuthority(role.getName()))
+                .peek(authority -> log.info("Role: " + authority.getAuthority()))
+                .collect(Collectors.toList());
+
+        log.info("User logged: " + username);
+
+        return new org.springframework.security.core.userdetails.User(user.getUsername(), user.getPassword(), user.getIsActive(), true,
+                true, true, authorities);
+
     }
 
     @Override
     public User findByUsername(String username) {
-        return userFeignClient.findByUsername(username);
+        return client.findByUsername(username);
     }
 
     @Override
     public User updateLoginAttempts(Long id, User user) {
-        return userFeignClient.updateLoginAttempts(id, user);
+        return client.updateLoginAttempts(id, user);
     }
 }

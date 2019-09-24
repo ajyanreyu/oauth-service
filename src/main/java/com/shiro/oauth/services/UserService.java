@@ -2,7 +2,7 @@ package com.shiro.oauth.services;
 
 import com.shiro.user.commons.entity.User;
 
-public interface UserService {
+public interface UserService{
 
     /**
      * Find user by username
